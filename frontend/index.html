@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OneWhat - Real-Time Translation</title>
+    <title>OneWhat - Universal Translation</title>
     <style>
         * {
             margin: 0;
@@ -11,445 +11,486 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f9fafb;
+            --card: #ffffff;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
 
         .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 800px;
-            width: 100%;
-            padding: 40px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
         }
 
         h1 {
-            color: #667eea;
-            font-size: 2.5em;
-            margin-bottom: 10px;
-            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 8px;
         }
 
         .subtitle {
+            color: var(--text-light);
+            font-size: 1.125rem;
+        }
+
+        .status-bar {
             text-align: center;
-            color: #666;
             margin-bottom: 30px;
-            font-size: 1.1em;
         }
 
         .status {
-            text-align: center;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
-
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.875rem;
         }
 
         .status.checking {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
+            background: #fef3c7;
+            color: #92400e;
         }
 
-        .control-group {
-            margin-bottom: 25px;
+        .status.connected {
+            background: #d1fae5;
+            color: #065f46;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
+        .status.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
             font-weight: 600;
-            font-size: 0.95em;
+            margin-bottom: 20px;
+            color: var(--text);
         }
 
-        select, input, button {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: all 0.3s ease;
-        }
-
-        select:focus, input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .language-select-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.2s;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 1.1em;
-            margin-top: 10px;
-            padding: 15px;
+            background: var(--bg);
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
         }
 
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: #dbeafe;
         }
 
-        .audio-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            opacity: 0.3;
         }
 
-        .audio-controls button {
-            flex: 1;
+        .upload-text {
+            color: var(--text-light);
+            margin-bottom: 16px;
         }
 
-        .result-box {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
+        .file-input {
             display: none;
         }
 
-        .result-box.visible {
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            font-size: 1rem;
+            margin-top: 20px;
+        }
+
+        .file-info {
+            margin-top: 16px;
+            padding: 12px;
+            background: #eff6ff;
+            border-radius: 8px;
+            color: var(--primary-dark);
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .file-info.visible {
+            display: block;
+        }
+
+        .language-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-size: 0.875rem;
+        }
+
+        select {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.visible {
             display: block;
         }
 
         .result-item {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         .result-label {
             font-weight: 600;
-            color: #667eea;
-            margin-bottom: 5px;
-            font-size: 0.9em;
+            color: var(--text-light);
+            font-size: 0.75rem;
             text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
         }
 
         .result-text {
-            color: #333;
-            font-size: 1.1em;
-            line-height: 1.6;
-        }
-
-        .metrics {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-
-        .metric {
-            background: white;
-            padding: 10px 15px;
+            background: var(--bg);
+            padding: 16px;
             border-radius: 8px;
-            flex: 1;
-            min-width: 120px;
-        }
-
-        .metric-label {
-            font-size: 0.8em;
-            color: #666;
-        }
-
-        .metric-value {
-            font-size: 1.2em;
-            font-weight: 600;
-            color: #667eea;
+            border: 1px solid var(--border);
+            line-height: 1.7;
+            font-size: 1rem;
         }
 
         .loading {
+            display: none;
             text-align: center;
-            padding: 20px;
+            padding: 40px;
+        }
+
+        .loading.visible {
+            display: block;
         }
 
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            border: 4px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-light);
+            font-size: 0.875rem;
         }
 
         .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 16px;
             border-radius: 8px;
-            margin-top: 20px;
-            border: 1px solid #f5c6cb;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .config-section {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 10px;
             margin-bottom: 20px;
-        }
-
-        .config-section summary {
-            cursor: pointer;
-            font-weight: 600;
-            color: #667eea;
-            padding: 5px;
-        }
-
-        .file-input-label {
-            display: inline-block;
-            padding: 12px 20px;
-            background: #667eea;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .file-input-label:hover {
-            background: #764ba2;
-        }
-
-        input[type="file"] {
             display: none;
+            border: 1px solid #fecaca;
         }
 
-        .file-name {
-            margin-top: 10px;
-            color: #666;
-            font-style: italic;
+        .error.visible {
+            display: block;
+        }
+
+        @media (max-width: 640px) {
+            .language-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .card {
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🌍 OneWhat</h1>
-        <p class="subtitle">Real-Time Speech Translation</p>
+        <header>
+            <h1>OneWhat</h1>
+            <p class="subtitle">Universal Speech Translation</p>
+        </header>
 
-        <div id="status" class="status checking">
-            ⏳ Checking API connection...
-        </div>
-
-        <details class="config-section">
-            <summary>⚙️ API Configuration</summary>
-            <div class="control-group" style="margin-top: 15px;">
-                <label for="apiUrl">API URL:</label>
-                <input 
-                    type="text" 
-                    id="apiUrl" 
-                    value="/api"
-                    placeholder="https://your-api.com"
-                >
-                <button onclick="checkConnection()">Test Connection</button>
-            </div>
-        </details>
-
-        <div class="language-select-group">
-            <div class="control-group">
-                <label for="sourceLanguage">🗣️ Source Language:</label>
-                <select id="sourceLanguage">
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="zh">Chinese</option>
-                    <option value="ja">Japanese</option>
-                    <option value="ko">Korean</option>
-                    <option value="ar">Arabic</option>
-                    <option value="hi">Hindi</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="it">Italian</option>
-                </select>
-            </div>
-
-            <div class="control-group">
-                <label for="targetLanguage">🎯 Target Language:</label>
-                <select id="targetLanguage">
-                    <option value="es">Spanish</option>
-                    <option value="en">English</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="zh">Chinese</option>
-                    <option value="ja">Japanese</option>
-                    <option value="ko">Korean</option>
-                    <option value="ar">Arabic</option>
-                    <option value="hi">Hindi</option>
-                    <option value="pt">Portuguese</option>
-                    <option value="ru">Russian</option>
-                    <option value="it">Italian</option>
-                </select>
+        <div class="status-bar">
+            <div id="status" class="status checking">
+                <span>⏳</span>
+                <span>Checking connection...</span>
             </div>
         </div>
 
-        <div class="control-group">
-            <label for="audioFile">🎵 Upload Audio File:</label>
-            <label for="audioFile" class="file-input-label">
-                📁 Choose Audio File
-            </label>
-            <input type="file" id="audioFile" accept="audio/*">
-            <div id="fileName" class="file-name"></div>
+        <div class="card">
+            <h2 class="section-title">Upload Audio</h2>
+            
+            <div id="uploadArea" class="upload-area">
+                <div class="upload-icon">🎤</div>
+                <p class="upload-text">Click to select an audio file or drag & drop</p>
+                <label for="audioFile" class="btn">Choose File</label>
+                <input type="file" id="audioFile" class="file-input" accept="audio/*">
+            </div>
+
+            <div id="fileInfo" class="file-info"></div>
+
+            <div class="language-grid">
+                <div class="form-group">
+                    <label for="sourceLanguage">Source Language</label>
+                    <select id="sourceLanguage">
+                        <option value="en">English</option>
+                        <option value="es">Spanish</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="zh">Chinese</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="ar">Arabic</option>
+                        <option value="hi">Hindi</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="it">Italian</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="targetLanguage">Target Language</label>
+                    <select id="targetLanguage">
+                        <option value="es">Spanish</option>
+                        <option value="en">English</option>
+                        <option value="fr">French</option>
+                        <option value="de">German</option>
+                        <option value="zh">Chinese</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="ar">Arabic</option>
+                        <option value="hi">Hindi</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ru">Russian</option>
+                        <option value="it">Italian</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="translateBtn" class="btn btn-primary" disabled>
+                Translate Audio
+            </button>
         </div>
 
-        <button id="translateBtn" onclick="translateAudio()">
-            🚀 Translate Audio
-        </button>
+        <div id="error" class="error"></div>
 
-        <div id="loading" class="loading" style="display: none;">
+        <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>Translating your audio...</p>
+            <p class="loading-text" id="loadingText">Processing...</p>
         </div>
 
-        <div id="results" class="result-box">
+        <div id="results" class="card results">
+            <h2 class="section-title">Translation Results</h2>
+            
             <div class="result-item">
-                <div class="result-label">Original Transcription</div>
-                <div id="transcription" class="result-text"></div>
+                <div class="result-label">Original Text</div>
+                <div class="result-text" id="originalText"></div>
             </div>
 
             <div class="result-item">
-                <div class="result-label">Translation</div>
-                <div id="translation" class="result-text"></div>
+                <div class="result-label">Translated Text</div>
+                <div class="result-text" id="translatedText"></div>
             </div>
-
-            <div class="metrics">
-                <div class="metric">
-                    <div class="metric-label">Total Latency</div>
-                    <div id="latency" class="metric-value">-</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">ASR</div>
-                    <div id="asr-time" class="metric-value">-</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">Translation</div>
-                    <div id="nmt-time" class="metric-value">-</div>
-                </div>
-                <div class="metric">
-                    <div class="metric-label">TTS</div>
-                    <div id="tts-time" class="metric-value">-</div>
-                </div>
-            </div>
-
-            <div class="result-item" style="margin-top: 20px;">
-                <div class="result-label">Translated Audio</div>
-                <audio id="audioPlayer" controls style="width: 100%; margin-top: 10px;"></audio>
-            </div>
-        </div>
-
-        <div id="error" class="error" style="display: none;"></div>
-
-        <div class="footer">
-            <p>Powered by <strong>OneWhat Translation System</strong></p>
-            <p><a href="https://github.com/yourusername/onewhat" target="_blank">View on GitHub</a></p>
         </div>
     </div>
 
     <script>
-        // Configuration
-        // Use Netlify functions for now (same domain, no CORS issues)
-        let apiUrl = localStorage.getItem('apiUrl') || '/api';
-        
-        // Auto-save API URL
-        const saveApiUrl = () => {
-            localStorage.setItem('apiUrl', apiUrl);
-        };
-        
-        // On load, use saved or default to Netlify functions
-        if (!localStorage.getItem('apiUrl')) {
-            localStorage.setItem('apiUrl', '/api');
-        }
-        document.getElementById('apiUrl').value = apiUrl;
+        const API_URL = '/api';
+        let selectedFile = null;
 
-        // Update API URL when changed
-        document.getElementById('apiUrl').addEventListener('change', (e) => {
-            apiUrl = e.target.value;
-            localStorage.setItem('apiUrl', apiUrl);
-            checkConnection();
-        });
-
-        // Show selected file name
-        document.getElementById('audioFile').addEventListener('change', (e) => {
-            const fileName = e.target.files[0]?.name || '';
-            document.getElementById('fileName').textContent = fileName ? `Selected: ${fileName}` : '';
-        });
+        // DOM Elements
+        const statusEl = document.getElementById('status');
+        const audioFileInput = document.getElementById('audioFile');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const translateBtn = document.getElementById('translateBtn');
+        const loadingEl = document.getElementById('loading');
+        const loadingText = document.getElementById('loadingText');
+        const resultsEl = document.getElementById('results');
+        const errorEl = document.getElementById('error');
+        const originalTextEl = document.getElementById('originalText');
+        const translatedTextEl = document.getElementById('translatedText');
 
         // Check API connection on load
-        window.addEventListener('load', checkConnection);
+        checkConnection();
 
         async function checkConnection() {
-            const statusEl = document.getElementById('status');
-            statusEl.className = 'status checking';
-            statusEl.textContent = '⏳ Checking API connection...';
+            updateStatus('checking', 'Checking connection...');
 
             try {
-                const response = await fetch(`${apiUrl}/health`);
+                const response = await fetch(`${API_URL}/health`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
                 if (response.ok) {
-                    statusEl.className = 'status connected';
-                    statusEl.textContent = '✅ Connected to API';
+                    const data = await response.json();
+                    updateStatus('connected', 'Connected');
                 } else {
-                    throw new Error('API returned error');
+                    throw new Error(`HTTP ${response.status}`);
                 }
             } catch (error) {
-                statusEl.className = 'status disconnected';
-                statusEl.textContent = '❌ Cannot connect to API. Check URL in settings.';
+                console.error('Connection check failed:', error);
+                updateStatus('disconnected', 'Connection failed');
+                showError('Cannot connect to API. Please check your connection.');
             }
         }
 
-        async function translateAudio() {
-            const fileInput = document.getElementById('audioFile');
-            const file = fileInput.files[0];
+        function updateStatus(state, message) {
+            statusEl.className = `status ${state}`;
+            const icon = state === 'connected' ? '✓' : state === 'checking' ? '⏳' : '✗';
+            statusEl.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+        }
 
+        // File upload handlers
+        audioFileInput.addEventListener('change', handleFileSelect);
+
+        uploadArea.addEventListener('click', () => {
+            audioFileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                audioFileInput.files = files;
+                handleFileSelect({ target: { files } });
+            }
+        });
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
             if (!file) {
+                selectedFile = null;
+                translateBtn.disabled = true;
+                fileInfo.classList.remove('visible');
+                return;
+            }
+
+            selectedFile = file;
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            fileInfo.textContent = `📎 ${file.name} (${fileSize} MB)`;
+            fileInfo.classList.add('visible');
+            translateBtn.disabled = false;
+            hideError();
+        }
+
+        // Translation handler
+        translateBtn.addEventListener('click', translateAudio);
+
+        async function translateAudio() {
+            if (!selectedFile) {
                 showError('Please select an audio file first.');
                 return;
             }
@@ -458,61 +499,74 @@
             const targetLanguage = document.getElementById('targetLanguage').value;
 
             // Show loading
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('results').classList.remove('visible');
-            document.getElementById('error').style.display = 'none';
-            document.getElementById('translateBtn').disabled = true;
+            loadingEl.classList.add('visible');
+            resultsEl.classList.remove('visible');
+            errorEl.classList.remove('visible');
+            translateBtn.disabled = true;
 
             try {
                 // Step 1: Convert audio to base64
-                const audioBase64 = await fileToBase64(file);
+                loadingText.textContent = 'Preparing audio...';
+                const audioBase64 = await fileToBase64(selectedFile);
 
                 // Step 2: Transcribe audio
-                document.getElementById('loadingText').textContent = 'Transcribing audio...';
-                const transcribeResponse = await fetch(`${apiUrl}/transcribe`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ audioBase64 })
-                });
-
-                if (!transcribeResponse.ok) {
-                    throw new Error('Transcription failed');
-                }
-
-                const transcription = await transcribeResponse.json();
+                loadingText.textContent = 'Transcribing speech...';
+                const transcription = await transcribeAudio(audioBase64);
                 const originalText = transcription.text;
 
-                // Step 3: Translate text
-                document.getElementById('loadingText').textContent = 'Translating...';
-                const translateResponse = await fetch(`${apiUrl}/translate`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: originalText,
-                        sourceLanguage,
-                        targetLanguage
-                    })
-                });
-
-                if (!translateResponse.ok) {
-                    throw new Error('Translation failed');
+                if (!originalText || originalText.trim() === '') {
+                    throw new Error('No speech detected in audio');
                 }
 
-                const translation = await translateResponse.json();
+                // Step 3: Translate text
+                loadingText.textContent = 'Translating...';
+                const translation = await translateText(originalText, sourceLanguage, targetLanguage);
+                const translatedText = translation.translatedText;
 
                 // Display results
-                document.getElementById('originalText').textContent = originalText;
-                document.getElementById('translatedText').textContent = translation.translatedText;
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('results').classList.add('visible');
+                originalTextEl.textContent = originalText;
+                translatedTextEl.textContent = translatedText;
+                
+                loadingEl.classList.remove('visible');
+                resultsEl.classList.add('visible');
 
             } catch (error) {
                 console.error('Translation error:', error);
-                showError('Translation failed: ' + error.message);
+                loadingEl.classList.remove('visible');
+                showError(`Translation failed: ${error.message}`);
             } finally {
-                document.getElementById('translateBtn').disabled = false;
-                document.getElementById('loadingText').textContent = 'Processing...';
+                translateBtn.disabled = false;
             }
+        }
+
+        async function transcribeAudio(audioBase64) {
+            const response = await fetch(`${API_URL}/transcribe`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ audioBase64 })
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Transcription failed: ${error}`);
+            }
+
+            return await response.json();
+        }
+
+        async function translateText(text, sourceLanguage, targetLanguage) {
+            const response = await fetch(`${API_URL}/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, sourceLanguage, targetLanguage })
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(`Translation failed: ${error}`);
+            }
+
+            return await response.json();
         }
 
         function fileToBase64(file) {
@@ -526,145 +580,15 @@
                 reader.readAsDataURL(file);
             });
         }
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        audio: audioData,
-                        sample_rate: 16000,
-                        source_lang: sourceLanguage,
-                        target_lang: targetLanguage,
-                    }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                displayResults(result);
-
-            } catch (error) {
-                showError(`Translation failed: ${error.message}`);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('translateBtn').disabled = false;
-            }
-        }
-
-        async function fileToAudioArray(file) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const arrayBuffer = await file.arrayBuffer();
-            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            
-            // Get mono audio data
-            const audioData = audioBuffer.getChannelData(0);
-            
-            // Resample to 16kHz if needed (simplified - assumes similar rate)
-            const targetRate = 16000;
-            const ratio = audioBuffer.sampleRate / targetRate;
-            const length = Math.floor(audioData.length / ratio);
-            const resampled = new Float32Array(length);
-            
-            for (let i = 0; i < length; i++) {
-                resampled[i] = audioData[Math.floor(i * ratio)];
-            }
-            
-            return Array.from(resampled);
-        }
-
-        function displayResults(result) {
-            document.getElementById('originalText').textContent = result.transcription || result.originalText;
-            document.getElementById('translatedText').textContent = result.translation || result.translatedText;
-            
-            if (result.latency_ms) {
-                document.getElementById('latency').textContent = `${result.latency_ms.toFixed(0)}ms`;
-            }
-            if (result.stage_latencies) {
-                document.getElementById('asr-time').textContent = `${result.stage_latencies.asr.toFixed(0)}ms`;
-                document.getElementById('nmt-time').textContent = `${result.stage_latencies.nmt.toFixed(0)}ms`;
-                document.getElementById('tts-time').textContent = `${result.stage_latencies.tts.toFixed(0)}ms`;
-            }
-
-            if (result.audio) {
-                // Create audio from result
-                const audioPlayer = document.getElementById('audioPlayer');
-                const audioArray = new Float32Array(result.audio);
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const audioBuffer = audioContext.createBuffer(1, audioArray.length, result.sample_rate);
-                audioBuffer.getChannelData(0).set(audioArray);
-
-                // Convert to playable format
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                
-                // Create WAV blob
-                const wav = audioBufferToWav(audioBuffer);
-                const blob = new Blob([wav], { type: 'audio/wav' });
-                audioPlayer.src = URL.createObjectURL(blob);
-            }
-
-            document.getElementById('results').classList.add('visible');
-        }
-
-        function audioBufferToWav(buffer) {
-            const length = buffer.length * buffer.numberOfChannels * 2 + 44;
-            const arrayBuffer = new ArrayBuffer(length);
-            const view = new DataView(arrayBuffer);
-            const channels = [];
-            let offset = 0;
-            let pos = 0;
-
-            // Write WAV header
-            setUint32(0x46464952); // "RIFF"
-            setUint32(length - 8); // file length - 8
-            setUint32(0x45564157); // "WAVE"
-            setUint32(0x20746d66); // "fmt " chunk
-            setUint32(16); // length = 16
-            setUint16(1); // PCM (uncompressed)
-            setUint16(buffer.numberOfChannels);
-            setUint32(buffer.sampleRate);
-            setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels); // avg. bytes/sec
-            setUint16(buffer.numberOfChannels * 2); // block-align
-            setUint16(16); // 16-bit
-            setUint32(0x61746164); // "data" - chunk
-            setUint32(length - pos - 4); // chunk length
-
-            // Write audio data
-            for (let i = 0; i < buffer.numberOfChannels; i++) {
-                channels.push(buffer.getChannelData(i));
-            }
-
-            while (pos < length) {
-                for (let i = 0; i < buffer.numberOfChannels; i++) {
-                    const sample = Math.max(-1, Math.min(1, channels[i][offset]));
-                    view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-                    pos += 2;
-                }
-                offset++;
-            }
-
-            return arrayBuffer;
-
-            function setUint16(data) {
-                view.setUint16(pos, data, true);
-                pos += 2;
-            }
-
-            function setUint32(data) {
-                view.setUint32(pos, data, true);
-                pos += 4;
-            }
-        }
 
         function showError(message) {
-            const errorEl = document.getElementById('error');
-            errorEl.textContent = `❌ ${message}`;
-            errorEl.style.display = 'block';
-            setTimeout(() => {
-                errorEl.style.display = 'none';
-            }, 5000);
+            errorEl.textContent = message;
+            errorEl.classList.add('visible');
+            setTimeout(hideError, 5000);
+        }
+
+        function hideError() {
+            errorEl.classList.remove('visible');
         }
     </script>
 </body>

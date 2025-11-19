@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OneWhat - Real-Time Translation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.checking {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .language-select-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-top: 10px;
+            padding: 15px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .audio-controls button {
+            flex: 1;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-box.visible {
+            display: block;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .result-text {
+            color: #333;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .metrics {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .metric {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .metric-label {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .metric-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .config-section summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: #667eea;
+            padding: 5px;
+        }
+
+        .file-input-label {
+            display: inline-block;
+            padding: 12px 20px;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .file-input-label:hover {
+            background: #764ba2;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 OneWhat</h1>
+        <p class="subtitle">Real-Time Speech Translation</p>
+
+        <div id="status" class="status checking">
+            ⏳ Checking API connection...
+        </div>
+
+        <details class="config-section">
+            <summary>⚙️ API Configuration</summary>
+            <div class="control-group" style="margin-top: 15px;">
+                <label for="apiUrl">API URL:</label>
+                <input 
+                    type="text" 
+                    id="apiUrl" 
+                    value="/api"
+                    placeholder="https://your-api.com"
+                >
+                <button onclick="checkConnection()">Test Connection</button>
+            </div>
+        </details>
+
+        <div class="language-select-group">
+            <div class="control-group">
+                <label for="sourceLanguage">🗣️ Source Language:</label>
+                <select id="sourceLanguage">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="zh">Chinese</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="ar">Arabic</option>
+                    <option value="hi">Hindi</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ru">Russian</option>
+                    <option value="it">Italian</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="targetLanguage">🎯 Target Language:</label>
+                <select id="targetLanguage">
+                    <option value="es">Spanish</option>
+                    <option value="en">English</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="zh">Chinese</option>
+                    <option value="ja">Japanese</option>
+                    <option value="ko">Korean</option>
+                    <option value="ar">Arabic</option>
+                    <option value="hi">Hindi</option>
+                    <option value="pt">Portuguese</option>
+                    <option value="ru">Russian</option>
+                    <option value="it">Italian</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="audioFile">🎵 Upload Audio File:</label>
+            <label for="audioFile" class="file-input-label">
+                📁 Choose Audio File
+            </label>
+            <input type="file" id="audioFile" accept="audio/*">
+            <div id="fileName" class="file-name"></div>
+        </div>
+
+        <button id="translateBtn" onclick="translateAudio()">
+            🚀 Translate Audio
+        </button>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Translating your audio...</p>
+        </div>
+
+        <div id="results" class="result-box">
+            <div class="result-item">
+                <div class="result-label">Original Transcription</div>
+                <div id="transcription" class="result-text"></div>
+            </div>
+
+            <div class="result-item">
+                <div class="result-label">Translation</div>
+                <div id="translation" class="result-text"></div>
+            </div>
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-label">Total Latency</div>
+                    <div id="latency" class="metric-value">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">ASR</div>
+                    <div id="asr-time" class="metric-value">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Translation</div>
+                    <div id="nmt-time" class="metric-value">-</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">TTS</div>
+                    <div id="tts-time" class="metric-value">-</div>
+                </div>
+            </div>
+
+            <div class="result-item" style="margin-top: 20px;">
+                <div class="result-label">Translated Audio</div>
+                <audio id="audioPlayer" controls style="width: 100%; margin-top: 10px;"></audio>
+            </div>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div class="footer">
+            <p>Powered by <strong>OneWhat Translation System</strong></p>
+            <p><a href="https://github.com/yourusername/onewhat" target="_blank">View on GitHub</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        // Use Netlify functions for now (same domain, no CORS issues)
+        let apiUrl = localStorage.getItem('apiUrl') || '/api';
+        
+        // Migrate old localhost URLs to new serverless endpoint
+        if (apiUrl.includes('localhost')) {
+            apiUrl = '/api';
+            localStorage.setItem('apiUrl', '/api');
+        }
+        
+        // Auto-save API URL
+        const saveApiUrl = () => {
+            localStorage.setItem('apiUrl', apiUrl);
+        };
+        
+        // On load, use saved or default to Netlify functions
+        if (!localStorage.getItem('apiUrl')) {
+            localStorage.setItem('apiUrl', '/api');
+        }
+        document.getElementById('apiUrl').value = apiUrl;
+
+        // Update API URL when changed
+        document.getElementById('apiUrl').addEventListener('change', (e) => {
+            apiUrl = e.target.value;
+            localStorage.setItem('apiUrl', apiUrl);
+            checkConnection();
+        });
+
+        // Show selected file name
+        document.getElementById('audioFile').addEventListener('change', (e) => {
+            const fileName = e.target.files[0]?.name || '';
+            document.getElementById('fileName').textContent = fileName ? `Selected: ${fileName}` : '';
+        });
+
+        // Check API connection on load
+        window.addEventListener('load', checkConnection);
+
+        async function checkConnection() {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status checking';
+            statusEl.textContent = '⏳ Checking API connection...';
+
+            try {
+                const response = await fetch(`${apiUrl}/health`);
+                if (response.ok) {
+                    statusEl.className = 'status connected';
+                    statusEl.textContent = '✅ Connected to API';
+                } else {
+                    throw new Error('API returned error');
+                }
+            } catch (error) {
+                statusEl.className = 'status disconnected';
+                statusEl.textContent = '❌ Cannot connect to API. Check URL in settings.';
+            }
+        }
+
+        async function translateAudio() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showError('Please select an audio file first.');
+                return;
+            }
+
+            const sourceLanguage = document.getElementById('sourceLanguage').value;
+            const targetLanguage = document.getElementById('targetLanguage').value;
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').classList.remove('visible');
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('translateBtn').disabled = true;
+
+            try {
+                // Step 1: Convert audio to base64
+                const audioBase64 = await fileToBase64(file);
+
+                // Step 2: Transcribe audio
+                document.getElementById('loadingText').textContent = 'Transcribing audio...';
+                const transcribeResponse = await fetch(`${apiUrl}/transcribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audioBase64 })
+                });
+
+                if (!transcribeResponse.ok) {
+                    throw new Error('Transcription failed');
+                }
+
+                const transcription = await transcribeResponse.json();
+                const originalText = transcription.text;
+
+                // Step 3: Translate text
+                document.getElementById('loadingText').textContent = 'Translating...';
+                const translateResponse = await fetch(`${apiUrl}/translate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: originalText,
+                        sourceLanguage,
+                        targetLanguage
+                    })
+                });
+
+                if (!translateResponse.ok) {
+                    throw new Error('Translation failed');
+                }
+
+                const translation = await translateResponse.json();
+
+                // Display results
+                document.getElementById('originalText').textContent = originalText;
+                document.getElementById('translatedText').textContent = translation.translatedText;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').classList.add('visible');
+
+            } catch (error) {
+                console.error('Translation error:', error);
+                showError('Translation failed: ' + error.message);
+            } finally {
+                document.getElementById('translateBtn').disabled = false;
+                document.getElementById('loadingText').textContent = 'Processing...';
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        audio: audioData,
+                        sample_rate: 16000,
+                        source_lang: sourceLanguage,
+                        target_lang: targetLanguage,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                displayResults(result);
+
+            } catch (error) {
+                showError(`Translation failed: ${error.message}`);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('translateBtn').disabled = false;
+            }
+        }
+
+        async function fileToAudioArray(file) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const arrayBuffer = await file.arrayBuffer();
+            const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            // Get mono audio data
+            const audioData = audioBuffer.getChannelData(0);
+            
+            // Resample to 16kHz if needed (simplified - assumes similar rate)
+            const targetRate = 16000;
+            const ratio = audioBuffer.sampleRate / targetRate;
+            const length = Math.floor(audioData.length / ratio);
+            const resampled = new Float32Array(length);
+            
+            for (let i = 0; i < length; i++) {
+                resampled[i] = audioData[Math.floor(i * ratio)];
+            }
+            
+            return Array.from(resampled);
+        }
+
+        function displayResults(result) {
+            document.getElementById('originalText').textContent = result.transcription || result.originalText;
+            document.getElementById('translatedText').textContent = result.translation || result.translatedText;
+            
+            if (result.latency_ms) {
+                document.getElementById('latency').textContent = `${result.latency_ms.toFixed(0)}ms`;
+            }
+            if (result.stage_latencies) {
+                document.getElementById('asr-time').textContent = `${result.stage_latencies.asr.toFixed(0)}ms`;
+                document.getElementById('nmt-time').textContent = `${result.stage_latencies.nmt.toFixed(0)}ms`;
+                document.getElementById('tts-time').textContent = `${result.stage_latencies.tts.toFixed(0)}ms`;
+            }
+
+            if (result.audio) {
+                // Create audio from result
+                const audioPlayer = document.getElementById('audioPlayer');
+                const audioArray = new Float32Array(result.audio);
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = audioContext.createBuffer(1, audioArray.length, result.sample_rate);
+                audioBuffer.getChannelData(0).set(audioArray);
+
+                // Convert to playable format
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                
+                // Create WAV blob
+                const wav = audioBufferToWav(audioBuffer);
+                const blob = new Blob([wav], { type: 'audio/wav' });
+                audioPlayer.src = URL.createObjectURL(blob);
+            }
+
+            document.getElementById('results').classList.add('visible');
+        }
+
+        function audioBufferToWav(buffer) {
+            const length = buffer.length * buffer.numberOfChannels * 2 + 44;
+            const arrayBuffer = new ArrayBuffer(length);
+            const view = new DataView(arrayBuffer);
+            const channels = [];
+            let offset = 0;
+            let pos = 0;
+
+            // Write WAV header
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16); // length = 16
+            setUint16(1); // PCM (uncompressed)
+            setUint16(buffer.numberOfChannels);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels); // avg. bytes/sec
+            setUint16(buffer.numberOfChannels * 2); // block-align
+            setUint16(16); // 16-bit
+            setUint32(0x61746164); // "data" - chunk
+            setUint32(length - pos - 4); // chunk length
+
+            // Write audio data
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+
+            while (pos < length) {
+                for (let i = 0; i < buffer.numberOfChannels; i++) {
+                    const sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+
+            return arrayBuffer;
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = `❌ ${message}`;
+            errorEl.style.display = 'block';
+            setTimeout(() => {
+                errorEl.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
