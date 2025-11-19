@@ -1,4 +1,4 @@
-const { HfInference } = require('@huggingface/inference');
+const axios = require('axios');
 
 exports.handler = async function(event, context) {
   // CORS headers
@@ -34,26 +34,31 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Initialize HF client with API key - using new router endpoint
-    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY, {
-      baseUrl: 'https://router.huggingface.co/hf-inference'
-    });
-    
-    // Use M2M100 model which is better supported for translation
-    const result = await hf.translation({
-      model: 'facebook/m2m100_418M',
-      inputs: text,
-      parameters: {
-        src_lang: sourceLanguage.substring(0, 2), // Convert eng_Latn -> en
-        tgt_lang: targetLanguage.substring(0, 2)  // Convert spa_Latn -> es
+    // Use direct API call to new HF router endpoint
+    const response = await axios.post(
+      'https://api-inference.huggingface.co/models/facebook/m2m100_418M',
+      {
+        inputs: text,
+        parameters: {
+          src_lang: sourceLanguage.substring(0, 2),
+          tgt_lang: targetLanguage.substring(0, 2)
+        }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
+
+    const translatedText = response.data[0]?.translation_text || response.data[0]?.generated_text || text;
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        translatedText: result.translation_text,
+        translatedText,
         sourceLanguage,
         targetLanguage,
         timestamp: new Date().toISOString()
@@ -61,13 +66,13 @@ exports.handler = async function(event, context) {
     };
 
   } catch (error) {
-    console.error('Translation error:', error);
+    console.error('Translation error:', error.response?.data || error.message);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Translation failed', 
-        message: error.message 
+        message: error.response?.data?.error || error.message 
       })
     };
   }
