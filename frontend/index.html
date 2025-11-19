@@ -395,7 +395,18 @@
     </div>
 
     <script>
-        let apiUrl = localStorage.getItem('apiUrl') || 'http://localhost:8000';
+        // Configuration
+        let apiUrl = localStorage.getItem('apiUrl') || 'https://onewhat-api.onrender.com';
+        
+        // Auto-save API URL
+        const saveApiUrl = () => {
+            localStorage.setItem('apiUrl', apiUrl);
+        };
+        
+        // On load, use saved or default Render URL
+        if (!localStorage.getItem('apiUrl')) {
+            localStorage.setItem('apiUrl', 'https://onewhat-api.onrender.com');
+        }
         document.getElementById('apiUrl').value = apiUrl;
 
         // Update API URL when changed
