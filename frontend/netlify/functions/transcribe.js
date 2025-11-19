@@ -31,35 +31,39 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Convert base64 to buffer
+    // Convert base64 to buffer (Blob format for HF API)
     const audioBuffer = Buffer.from(audioBase64, 'base64');
+    const audioBlob = new Blob([audioBuffer]);
 
     // Initialize HF client
     const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
-    // Use Whisper via Hugging Face API
+    // Use Whisper tiny model (more reliable on serverless)
     const result = await hf.automaticSpeechRecognition({
-      model: 'openai/whisper-base',
-      data: audioBuffer
+      model: 'openai/whisper-tiny',
+      data: audioBlob
     });
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        text: result.text,
+        text: result.text || '',
         timestamp: new Date().toISOString()
       })
     };
 
   } catch (error) {
     console.error('Transcription error:', error);
+    
+    // Detailed error for debugging
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Transcription failed', 
-        message: error.message 
+        message: error.message,
+        details: error.toString()
       })
     };
   }
