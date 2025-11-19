@@ -34,8 +34,10 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Initialize HF client with API key
-    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+    // Initialize HF client with API key - using new router endpoint
+    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY, {
+      baseUrl: 'https://router.huggingface.co/hf-inference'
+    });
     
     // Use M2M100 model which is better supported for translation
     const result = await hf.translation({

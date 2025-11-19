@@ -34,8 +34,10 @@ exports.handler = async function(event, context) {
     // Convert base64 to buffer
     const audioBuffer = Buffer.from(audioBase64, 'base64');
 
-    // Initialize HF client with API key
-    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+    // Initialize HF client with API key - using new router endpoint
+    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY, {
+      baseUrl: 'https://router.huggingface.co/hf-inference'
+    });
 
     // Use Whisper via Hugging Face API
     const result = await hf.automaticSpeechRecognition({
