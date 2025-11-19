@@ -66,3 +66,6 @@ htmlcov/
 *.flac
 uploads/
 outputs/
+
+# Local Netlify folder
+.netlify
