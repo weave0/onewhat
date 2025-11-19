@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: onewhat-api
+    runtime: docker
+    dockerfilePath: ./infrastructure/docker/Dockerfile
+    region: oregon
+    plan: free
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: WHISPER_MODEL
+        value: large-v3
+      - key: WHISPER_DEVICE
+        value: cpu
+      - key: NMT_MODEL
+        value: facebook/nllb-200-distilled-600M
+      - key: NMT_DEVICE
+        value: cpu
+      - key: TTS_DEVICE
+        value: cpu
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MAX_AUDIO_SIZE_MB
+        value: 25
+      - key: CORS_ORIGINS
+        value: "*"
+    disk:
+      name: models
+      mountPath: /app/models
+      sizeGB: 20
