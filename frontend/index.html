@@ -464,11 +464,68 @@
             document.getElementById('translateBtn').disabled = true;
 
             try {
-                // Convert audio file to array
-                const audioData = await fileToAudioArray(file);
+                // Step 1: Convert audio to base64
+                const audioBase64 = await fileToBase64(file);
 
-                // Make API request
-                const response = await fetch(`${apiUrl}/translate`, {
+                // Step 2: Transcribe audio
+                document.getElementById('loadingText').textContent = 'Transcribing audio...';
+                const transcribeResponse = await fetch(`${apiUrl}/transcribe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audioBase64 })
+                });
+
+                if (!transcribeResponse.ok) {
+                    throw new Error('Transcription failed');
+                }
+
+                const transcription = await transcribeResponse.json();
+                const originalText = transcription.text;
+
+                // Step 3: Translate text
+                document.getElementById('loadingText').textContent = 'Translating...';
+                const translateResponse = await fetch(`${apiUrl}/translate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: originalText,
+                        sourceLanguage,
+                        targetLanguage
+                    })
+                });
+
+                if (!translateResponse.ok) {
+                    throw new Error('Translation failed');
+                }
+
+                const translation = await translateResponse.json();
+
+                // Display results
+                document.getElementById('originalText').textContent = originalText;
+                document.getElementById('translatedText').textContent = translation.translatedText;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('results').classList.add('visible');
+
+            } catch (error) {
+                console.error('Translation error:', error);
+                showError('Translation failed: ' + error.message);
+            } finally {
+                document.getElementById('translateBtn').disabled = false;
+                document.getElementById('loadingText').textContent = 'Processing...';
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -518,28 +575,35 @@
         }
 
         function displayResults(result) {
-            document.getElementById('transcription').textContent = result.transcription;
-            document.getElementById('translation').textContent = result.translation;
-            document.getElementById('latency').textContent = `${result.latency_ms.toFixed(0)}ms`;
-            document.getElementById('asr-time').textContent = `${result.stage_latencies.asr.toFixed(0)}ms`;
-            document.getElementById('nmt-time').textContent = `${result.stage_latencies.nmt.toFixed(0)}ms`;
-            document.getElementById('tts-time').textContent = `${result.stage_latencies.tts.toFixed(0)}ms`;
-
-            // Create audio from result
-            const audioPlayer = document.getElementById('audioPlayer');
-            const audioArray = new Float32Array(result.audio);
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const audioBuffer = audioContext.createBuffer(1, audioArray.length, result.sample_rate);
-            audioBuffer.getChannelData(0).set(audioArray);
-
-            // Convert to playable format
-            const source = audioContext.createBufferSource();
-            source.buffer = audioBuffer;
+            document.getElementById('originalText').textContent = result.transcription || result.originalText;
+            document.getElementById('translatedText').textContent = result.translation || result.translatedText;
             
-            // Create WAV blob
-            const wav = audioBufferToWav(audioBuffer);
-            const blob = new Blob([wav], { type: 'audio/wav' });
-            audioPlayer.src = URL.createObjectURL(blob);
+            if (result.latency_ms) {
+                document.getElementById('latency').textContent = `${result.latency_ms.toFixed(0)}ms`;
+            }
+            if (result.stage_latencies) {
+                document.getElementById('asr-time').textContent = `${result.stage_latencies.asr.toFixed(0)}ms`;
+                document.getElementById('nmt-time').textContent = `${result.stage_latencies.nmt.toFixed(0)}ms`;
+                document.getElementById('tts-time').textContent = `${result.stage_latencies.tts.toFixed(0)}ms`;
+            }
+
+            if (result.audio) {
+                // Create audio from result
+                const audioPlayer = document.getElementById('audioPlayer');
+                const audioArray = new Float32Array(result.audio);
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const audioBuffer = audioContext.createBuffer(1, audioArray.length, result.sample_rate);
+                audioBuffer.getChannelData(0).set(audioArray);
+
+                // Convert to playable format
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                
+                // Create WAV blob
+                const wav = audioBufferToWav(audioBuffer);
+                const blob = new Blob([wav], { type: 'audio/wav' });
+                audioPlayer.src = URL.createObjectURL(blob);
+            }
 
             document.getElementById('results').classList.add('visible');
         }

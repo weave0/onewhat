@@ -1,0 +1,9 @@
+{
+  "name": "onewhat-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for OneWhat translation",
+  "dependencies": {
+    "@huggingface/inference": "^2.6.4",
+    "axios": "^1.6.2"
+  }
+}
