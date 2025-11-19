@@ -28,11 +28,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     global pipeline
 
     logger.info("Starting OneWhat Translation API")
+    logger.info("Deferring model loading until first request")
+    
+    # Don't initialize pipeline on startup - do it on first request
+    # This allows the server to start quickly and respond to health checks
+    pipeline = None
 
-    # Initialize pipeline
-    pipeline = create_pipeline()
-
-    logger.info("API ready")
+    logger.info("API ready - models will load on first translation request")
 
     yield
 
@@ -116,8 +118,13 @@ async def translate(request: TranslationRequest) -> dict:
     Returns:
         Translation response with audio and metadata
     """
+    global pipeline
+    
+    # Lazy-load pipeline on first request
     if pipeline is None:
-        raise HTTPException(status_code=503, detail="Pipeline not initialized")
+        logger.info("First translation request - initializing pipeline...")
+        pipeline = create_pipeline()
+        logger.info("Pipeline initialized successfully")
 
     try:
         logger.info(
@@ -150,11 +157,22 @@ async def websocket_translate(websocket: WebSocket) -> None:
     
     Client sends audio chunks, receives translated audio in real-time.
     """
+    global pipeline
+    
     await websocket.accept()
 
+    # Lazy-load pipeline on first request
     if pipeline is None:
-        await websocket.close(code=1011, reason="Pipeline not initialized")
-        return
+        logger.info("First WebSocket request - initializing pipeline...")
+        try:
+            pipeline = create_pipeline()
+            logger.info("Pipeline initialized successfully")
+        except Exception as e:
+            logger.error("Failed to initialize pipeline", error=str(e))
+            await websocket.close(
+                code=1011, reason="Pipeline initialization failed"
+            )
+            return
 
     logger.info("WebSocket connection established")
 
