@@ -1,7 +1,5 @@
 const { HfInference } = require('@huggingface/inference');
 
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-
 exports.handler = async function(event, context) {
   // CORS headers
   const headers = {
@@ -36,9 +34,10 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Use Hugging Face NLLB model for translation
-    const translationPrompt = `Translate from ${sourceLanguage} to ${targetLanguage}: ${text}`;
+    // Initialize HF client with API key
+    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
     
+    // Use Hugging Face NLLB model for translation
     const result = await hf.translation({
       model: 'facebook/nllb-200-distilled-600M',
       inputs: text,

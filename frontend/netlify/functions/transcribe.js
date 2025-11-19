@@ -1,7 +1,5 @@
 const { HfInference } = require('@huggingface/inference');
 
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-
 exports.handler = async function(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -35,6 +33,9 @@ exports.handler = async function(event, context) {
 
     // Convert base64 to buffer
     const audioBuffer = Buffer.from(audioBase64, 'base64');
+
+    // Initialize HF client with API key
+    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 
     // Use Whisper via Hugging Face API
     const result = await hf.automaticSpeechRecognition({
