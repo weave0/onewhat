@@ -23,6 +23,6 @@ services:
       - key: MAX_AUDIO_SIZE_MB
         value: 25
       - key: CORS_ORIGINS
-        value: "*"
+        value: "[\"https://onewhat-translator.netlify.app\"]"
       - key: MODEL_CACHE_DIR
         value: /tmp/models
