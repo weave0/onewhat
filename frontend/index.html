@@ -396,16 +396,17 @@
 
     <script>
         // Configuration
-        let apiUrl = localStorage.getItem('apiUrl') || 'https://onewhat-api.onrender.com';
+        // Use Netlify functions for now (same domain, no CORS issues)
+        let apiUrl = localStorage.getItem('apiUrl') || '/api';
         
         // Auto-save API URL
         const saveApiUrl = () => {
             localStorage.setItem('apiUrl', apiUrl);
         };
         
-        // On load, use saved or default Render URL
+        // On load, use saved or default to Netlify functions
         if (!localStorage.getItem('apiUrl')) {
-            localStorage.setItem('apiUrl', 'https://onewhat-api.onrender.com');
+            localStorage.setItem('apiUrl', '/api');
         }
         document.getElementById('apiUrl').value = apiUrl;
 

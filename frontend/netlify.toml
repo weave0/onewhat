@@ -6,6 +6,15 @@
   publish = "."
   command = "echo 'No build required - static HTML'"
 
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  # API functions
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
 [[redirects]]
   # SPA fallback (not needed for single-page static site)
   from = "/*"
@@ -18,5 +27,6 @@
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+    Access-Control-Allow-Origin = "*"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "no-referrer-when-downgrade"
