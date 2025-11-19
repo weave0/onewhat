@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { HfInference } = require('@huggingface/inference');
 
 exports.handler = async function(event, context) {
   const headers = {
@@ -34,36 +34,32 @@ exports.handler = async function(event, context) {
     // Convert base64 to buffer
     const audioBuffer = Buffer.from(audioBase64, 'base64');
 
-    // Use HF Serverless Inference API with Whisper
-    const response = await axios.post(
-      'https://api-inference.huggingface.co/models/openai/whisper-large-v3',
-      audioBuffer,
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-          'Content-Type': 'audio/wav'
-        },
-        timeout: 60000
-      }
-    );
+    // Initialize HF client
+    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+
+    // Use Whisper via Hugging Face API
+    const result = await hf.automaticSpeechRecognition({
+      model: 'openai/whisper-base',
+      data: audioBuffer
+    });
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        text: response.data.text,
+        text: result.text,
         timestamp: new Date().toISOString()
       })
     };
 
   } catch (error) {
-    console.error('Transcription error:', error.response?.data || error.message);
+    console.error('Transcription error:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Transcription failed', 
-        message: error.response?.data?.error || error.message 
+        message: error.message 
       })
     };
   }

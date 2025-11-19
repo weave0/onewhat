@@ -1,4 +1,4 @@
-const axios = require('axios');
+const { HfInference } = require('@huggingface/inference');
 
 exports.handler = async function(event, context) {
   // CORS headers
@@ -34,7 +34,10 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // Map language codes to model-specific formats
+    // Initialize HF client
+    const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+
+    // Map language codes
     const langMap = {
       'eng_Latn': 'en', 'spa_Latn': 'es', 'fra_Latn': 'fr', 'deu_Latn': 'de',
       'ita_Latn': 'it', 'por_Latn': 'pt', 'rus_Cyrl': 'ru', 'zho_Hans': 'zh',
@@ -44,84 +47,38 @@ exports.handler = async function(event, context) {
     const srcLang = langMap[sourceLanguage] || sourceLanguage.substring(0, 2);
     const tgtLang = langMap[targetLanguage] || targetLanguage.substring(0, 2);
 
-    // Use Helsinki-NLP OPUS models (widely supported, fast, and work well)
-    const modelName = `Helsinki-NLP/opus-mt-${srcLang}-${tgtLang}`;
-    
-    // Use HF Serverless Inference API
-    const response = await axios.post(
-      `https://api-inference.huggingface.co/models/${modelName}`,
-      { inputs: text },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        timeout: 30000
+    // Use text generation with instruction for translation
+    const result = await hf.textGeneration({
+      model: 'facebook/mbart-large-50-many-to-many-mmt',
+      inputs: `Translate from ${srcLang} to ${tgtLang}: ${text}`,
+      parameters: {
+        max_new_tokens: 512,
+        temperature: 0.3,
+        return_full_text: false
       }
-    );
+    });
 
-    const translatedText = Array.isArray(response.data) 
-      ? response.data[0]?.translation_text || response.data[0]?.generated_text || text
-      : response.data?.translation_text || response.data?.generated_text || text;
+    const translatedText = result.generated_text || text;
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        translatedText,
+        translatedText: translatedText.trim(),
         sourceLanguage,
         targetLanguage,
-        model: modelName,
         timestamp: new Date().toISOString()
       })
     };
 
   } catch (error) {
-    console.error('Translation error:', error.response?.data || error.message);
-    
-    // If model not found, try a generic multilingual model
-    if (error.response?.status === 404) {
-      try {
-        const response = await axios.post(
-          'https://api-inference.huggingface.co/models/facebook/mbart-large-50-many-to-many-mmt',
-          { inputs: event.body.text },
-          {
-            headers: {
-              'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            translatedText: response.data[0]?.generated_text || event.body.text,
-            sourceLanguage: event.body.sourceLanguage,
-            targetLanguage: event.body.targetLanguage,
-            model: 'facebook/mbart-large-50-many-to-many-mmt',
-            timestamp: new Date().toISOString()
-          })
-        };
-      } catch (fallbackError) {
-        return {
-          statusCode: 500,
-          headers,
-          body: JSON.stringify({ 
-            error: 'Translation failed', 
-            message: 'Model not available. Try different language pair.'
-          })
-        };
-      }
-    }
-    
+    console.error('Translation error:', error);
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
         error: 'Translation failed', 
-        message: error.response?.data?.error || error.message 
+        message: error.message 
       })
     };
   }

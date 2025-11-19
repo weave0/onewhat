@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Netlify functions for OneWhat translation",
   "dependencies": {
-    "@huggingface/inference": "^2.6.4",
+    "@huggingface/inference": "^4.13.3",
     "axios": "^1.6.2"
   }
 }
