@@ -37,13 +37,13 @@ exports.handler = async function(event, context) {
     // Initialize HF client with API key
     const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
     
-    // Use Hugging Face NLLB model for translation
+    // Use M2M100 model which is better supported for translation
     const result = await hf.translation({
-      model: 'facebook/nllb-200-distilled-600M',
+      model: 'facebook/m2m100_418M',
       inputs: text,
       parameters: {
-        src_lang: sourceLanguage,
-        tgt_lang: targetLanguage
+        src_lang: sourceLanguage.substring(0, 2), // Convert eng_Latn -> en
+        tgt_lang: targetLanguage.substring(0, 2)  // Convert spa_Latn -> es
       }
     });
 
