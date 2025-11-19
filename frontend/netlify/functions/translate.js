@@ -47,18 +47,17 @@ exports.handler = async function(event, context) {
     const srcLang = langMap[sourceLanguage] || sourceLanguage.substring(0, 2);
     const tgtLang = langMap[targetLanguage] || targetLanguage.substring(0, 2);
 
-    // Use text generation with instruction for translation
-    const result = await hf.textGeneration({
+    // Use translation task with mBART model
+    const result = await hf.translation({
       model: 'facebook/mbart-large-50-many-to-many-mmt',
-      inputs: `Translate from ${srcLang} to ${tgtLang}: ${text}`,
+      inputs: text,
       parameters: {
-        max_new_tokens: 512,
-        temperature: 0.3,
-        return_full_text: false
+        src_lang: srcLang,
+        tgt_lang: tgtLang
       }
     });
 
-    const translatedText = result.generated_text || text;
+    const translatedText = result.translation_text || text;
 
     return {
       statusCode: 200,
