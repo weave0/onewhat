@@ -59,11 +59,14 @@ exports.handler = async function(event, context) {
 
     const translatedText = result.translation_text || text;
 
+    // Clean up output (remove language prefix if present)
+    const cleanedText = translatedText.replace(/^[a-z]{2,3}\s+/, '').trim();
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        translatedText: translatedText.trim(),
+        translatedText: cleanedText,
         sourceLanguage,
         targetLanguage,
         timestamp: new Date().toISOString()
