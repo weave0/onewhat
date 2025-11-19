@@ -9,7 +9,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: WHISPER_MODEL
-        value: large-v3
+        value: base
       - key: WHISPER_DEVICE
         value: cpu
       - key: NMT_MODEL
@@ -24,7 +24,5 @@ services:
         value: 25
       - key: CORS_ORIGINS
         value: "*"
-    disk:
-      name: models
-      mountPath: /app/models
-      sizeGB: 20
+      - key: MODEL_CACHE_DIR
+        value: /tmp/models
