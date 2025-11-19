@@ -34,9 +34,9 @@ exports.handler = async function(event, context) {
     // Convert base64 to buffer
     const audioBuffer = Buffer.from(audioBase64, 'base64');
 
-    // Use direct API call to HF inference API
+    // Use direct API call to HF router inference API
     const response = await axios.post(
-      'https://api-inference.huggingface.co/models/openai/whisper-large-v3',
+      'https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3',
       audioBuffer,
       {
         headers: {

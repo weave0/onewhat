@@ -36,7 +36,7 @@ exports.handler = async function(event, context) {
 
     // Use direct API call to new HF router endpoint
     const response = await axios.post(
-      'https://api-inference.huggingface.co/models/facebook/m2m100_418M',
+      'https://router.huggingface.co/hf-inference/models/facebook/m2m100_418M',
       {
         inputs: text,
         parameters: {
