@@ -32,6 +32,7 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --extra-index-url ht
 # Copy application code
 COPY src/ ./src/
 COPY scripts/ ./scripts/
+COPY minimal_api.py ./
 
 # Create directories
 RUN mkdir -p models cache data logs
@@ -46,5 +47,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
 
-# Run API server - use uvicorn directly with explicit path
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+# TEMPORARY: Use minimal API for testing startup
+# Once this works, switch back to: CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "minimal_api:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
